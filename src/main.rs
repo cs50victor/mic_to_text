@@ -40,26 +40,22 @@ impl InputDevice {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let input_device = InputDevice::new()?;
-    
-    
+
     let spec = wav_spec_from_config(&input_device.config);
     let writer = hound::WavWriter::create(PATH, spec)?;
     let writer = Arc::new(Mutex::new(Some(writer)));
     // A flag to indicate that recording is in progress.
     println!("Begin recording...");
-    
+
     // Run the input stream on a separate thread.
     let writer_2 = writer.clone();
-    
-    write_mic_audio_to_file(writer_2, &input_device, Duration::from_secs(10))?;
 
-    let filename =
-        PATH.to_string();
+    write_mic_audio_to_file(writer_2, &input_device, Duration::from_secs(5))?;
+
+    let filename = PATH.to_string();
     let file_contents = std::fs::read(filename)?;
 
-    let bytes = bytes::Bytes::from(file_contents);
-
-    let audio_input = AudioInput::from_bytes(PATH.to_string(), bytes);
+    let audio_input = AudioInput::from_vec_u8(PATH.to_string(), file_contents);
     let client = Client::new();
     let request = CreateTranscriptionRequestArgs::default()
         .file(audio_input)
@@ -75,7 +71,7 @@ fn write_mic_audio_to_file(
     wav_file_writer: Arc<Mutex<Option<hound::WavWriter<std::io::BufWriter<std::fs::File>>>>>,
     input_device: &InputDevice,
     duration: Duration,
-) -> Result<(), anyhow::Error>  {
+) -> Result<(), anyhow::Error> {
     let (_, device, config) = input_device.get_all();
 
     let sample_format = config.sample_format();
@@ -127,11 +123,15 @@ fn write_mic_audio_to_file(
     // Let recording go for roughly three seconds.
     std::thread::sleep(duration);
     drop(stream);
-    wav_file_writer_clone.lock().unwrap().take().unwrap().finalize()?;
+    wav_file_writer_clone
+        .lock()
+        .unwrap()
+        .take()
+        .unwrap()
+        .finalize()?;
     println!("Recording {} complete!", PATH);
     Ok(())
 }
-
 
 fn wav_spec_from_config(config: &cpal::SupportedStreamConfig) -> hound::WavSpec {
     hound::WavSpec {
