@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.83"
 async-openai = "0.21.0"
-bytes = "1.6.0"
 cpal = "0.15.3"
 hound = "3.5.1"
 tokio = { version = "1.37.0", features = ["full"] }
