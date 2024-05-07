@@ -68,7 +68,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn write_mic_audio_to_file(
-    wav_file_writer: Arc<Mutex<Option<hound::WavWriter<std::io::BufWriter<std::fs::File>>>>>,
+    wav_file_writer: WavWriterHandle,
     input_device: &InputDevice,
     duration: Duration,
 ) -> Result<(), anyhow::Error> {
